@@ -1,13 +1,11 @@
-# FREX - Rendering Extensions for the Fabric Rendering API
+# FREX Events - Compatibility Library for Fabric Renderer Implementations
 
-Extensions for the Fabric rendering API.  These may or may not be proposed and accepted for inclusion in the Fabric API.  
+Mods like Canvas replace large sections of WorldRenderer, which breaks mods that mix in to that class. 
+The events in this library can be invoked by any renderer that breaks them, so that mods depending on them
+will not break.
 
-Also includes a shaded copy of [JOML](https://github.com/JOML-CI/JOML) for use by renderer implementations and rendering mods.
-
-Packaged as a separate mod so that rendering implementations and mods that consume these extensions can
-depend on it without directly depending on specific implementation.
-
-More information on using FREX is available on the [Renderosity Wiki](https://github.com/grondag/renderosity/wiki).
+The library is tiny and includes hooks that work with the vanilla WorldRenderer class so that it can be 
+depended on directly and bundled with mods that use it.
 
 # Using FREX
 
@@ -22,12 +20,12 @@ repositories {
 }
 ```
 
-And add FREX to your dependencies
+And add FREX Events to your dependencies
 
 ```gradle
 dependencies {
-	modCompile "grondag:frex:0.7.+"
-	include "grondag:frex:0.7.+"
+	modCompile "grondag:frex-events:1.0.+"
+	include "grondag:frex-events:1.0.+"
 }
 ```
 
