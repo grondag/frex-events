@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "frex-events",
+  "version": "${version}",
+  "name": "FREX Events",
+  "description": "Render event compatibility library",
+  "authors": [
+    "Grondag"
+  ],
+  "contact": {
+    "homepage": "https://github.com/grondag/frex-events",
+    "issues": "https://github.com/grondag/frex-events/issues",
+    "sources": "https://github.com/grondag/frex-events"
+  },
+
+  "license": "Apache-2.0",
+  "icon": "assets/frex/frex_icon.png",
+
+  "environment": "client",
+  "mixins": [
+    "frex-events.client.json"
+  ],
+  "depends": {
+    "fabricloader": "\u003e\u003d0.9.1",
+    "minecraft": "~1.16.2",
+    "fabric": "*"
+  },
+  "custom": {
+    "modmenu:api": true
+  }
+}
