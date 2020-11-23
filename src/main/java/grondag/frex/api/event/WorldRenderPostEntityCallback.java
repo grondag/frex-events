@@ -33,9 +33,6 @@ public interface WorldRenderPostEntityCallback {
 	 * {@VertexConsumerProvider} from the provided context. This
 	 * will generally give better (if not perfect) results
 	 * for non-terrain translucency vs. drawing directly later on.
-	 *
-	 * <p>Satin: EntitiesPostRenderCallback.onEntitiesRendered
-	 * Litematica: LitematicaRenderer.piecewiseRenderEntities
 	 */
 	Event<WorldRenderPostEntityCallback> EVENT = EventFactory.createArrayBacked(WorldRenderPostEntityCallback.class, callbacks -> context -> {
 		for (final WorldRenderPostEntityCallback callback : callbacks) {

@@ -26,9 +26,9 @@ public interface WorldRenderEndCallback {
 	/**
 	 * Called after all world rendering is complete and changes to GL state are unwound.
 	 *
-	 * <p>Satin: PostWorldRenderCallbackV2.onWorldRendered
-	 * BBOR: ClientInterop.render
-	 * VoxelMap: MixinWorldRenderer.postRender
+	 * <p>Use to draw overlays that handle GL state management independently or to tear
+	 * down transient state in event handlers or as a hook that precedes hand/held item
+	 * and GUI rendering.
 	 */
 	Event<WorldRenderEndCallback> EVENT = EventFactory.createArrayBacked(WorldRenderEndCallback.class, callbacks -> context -> {
 		for (final WorldRenderEndCallback callback : callbacks) {

@@ -32,9 +32,6 @@ public interface WorldRenderLastCallback {
 	 * matrix will be transformed to match the camera view before the event is called.
 	 *
 	 * <p>Use to draw content that should appear on top of the world before hand and GUI rendering occur.
-	 *
-	 * <p>Satin: PostWorldRenderCallbackV2.onWorldRendered
-	 * BBOR: ClientInterop.render
 	 */
 	Event<WorldRenderLastCallback> EVENT = EventFactory.createArrayBacked(WorldRenderLastCallback.class, callbacks -> context -> {
 		for (final WorldRenderLastCallback callback : callbacks) {

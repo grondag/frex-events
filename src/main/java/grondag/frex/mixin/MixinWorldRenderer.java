@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.client.gl.ShaderEffect;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
@@ -49,12 +50,13 @@ import grondag.frex.impl.event.WorldRenderContextImpl;
 public class MixinWorldRenderer {
 	@Shadow private BufferBuilderStorage bufferBuilders;
 	@Shadow private ClientWorld world;
+	@Shadow private ShaderEffect transparencyShader;
 	private final WorldRenderContextImpl context = new WorldRenderContextImpl();
 	private boolean didRenderParticles;
 
 	@Inject(method = "render", at = @At("HEAD"))
 	private void beforeRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
-		context.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler());
+		context.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler(), transparencyShader != null);
 		WorldRenderStartCallback.EVENT.invoker().onWorldRenderStart(context);
 		didRenderParticles = false;
 	}

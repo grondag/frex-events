@@ -18,6 +18,10 @@ package grondag.frex.api.event;
 
 import net.minecraft.client.render.Frustum;
 
+/**
+ * Conveys WorldRenderer state to event handlers after invocation.
+ * Includes view frustum, which is not available then.
+ */
 public interface WorldRenderContext extends WorldRenderStartContext {
 	Frustum frustum();
 }

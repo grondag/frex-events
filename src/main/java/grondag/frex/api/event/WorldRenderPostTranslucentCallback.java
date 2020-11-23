@@ -28,14 +28,10 @@ public interface WorldRenderPostTranslucentCallback {
 	 * drawn to the framebuffer but before translucency combine has happened
 	 * in fabulous mode.
 	 *
-	 * <p>Use this for drawing overlays or other effects on top of those targets
+	 * <p>Use for drawing overlays or other effects on top of those targets
 	 * (or the main target when fabulous isn't active) before clouds and weather
 	 * are drawn.  However, note that {@code WorldRenderPostEntityCallback} will
 	 * offer better results in most use cases.
-	 *
-	 * <p>Litematica: LitematicaRenderer.piecewiseRenderTranslucent
-	 * Litematica: LitematicaRenderer.piecewiseRenderOverlay
-	 * JustMap: WaypointRenderer.renderWaypoints
 	 */
 	Event<WorldRenderPostTranslucentCallback> EVENT = EventFactory.createArrayBacked(WorldRenderPostTranslucentCallback.class, callbacks -> context -> {
 		for (final WorldRenderPostTranslucentCallback callback : callbacks) {

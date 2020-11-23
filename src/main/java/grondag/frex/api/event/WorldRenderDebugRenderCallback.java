@@ -34,8 +34,6 @@ public interface WorldRenderDebugRenderCallback {
 	 *
 	 * <p>Use to drawn lines, overlays and other content similar to vanilla
 	 * debug renders.
-	 *
-	 * <p>Cloth: ClothClientHooks.DEBUG_RENDER_PRE
 	 */
 	Event<WorldRenderDebugRenderCallback> EVENT = EventFactory.createArrayBacked(WorldRenderDebugRenderCallback.class, callbacks -> context -> {
 		for (final WorldRenderDebugRenderCallback callback : callbacks) {

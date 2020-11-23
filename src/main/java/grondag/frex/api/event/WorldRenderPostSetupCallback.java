@@ -27,7 +27,7 @@ public interface WorldRenderPostSetupCallback {
 	 * Called after view Frustum is computed and all render chunks to be rendered are
 	 * identified and rebuilt but before chunks are uploaded to GPU.
 	 *
-	 * <p>Typical usage is for setup of state that depends on view frustum.
+	 * <p>Use for setup of state that depends on view frustum.
 	 */
 	Event<WorldRenderPostSetupCallback> EVENT = EventFactory.createArrayBacked(WorldRenderPostSetupCallback.class, callbacks -> context -> {
 		for (final WorldRenderPostSetupCallback callback : callbacks) {

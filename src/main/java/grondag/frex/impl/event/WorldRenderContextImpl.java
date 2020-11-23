@@ -18,6 +18,8 @@ package grondag.frex.impl.event;
 
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -33,10 +35,13 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 	protected long limitTime;
 	protected boolean blockOutlines;
 	protected Camera camera;
-	protected Matrix4f projectionMatrix;
 	protected Frustum frustum;
+	protected GameRenderer gameRenderer;
+	protected LightmapTextureManager lightmapTextureManager;
+	protected Matrix4f projectionMatrix;
 	protected VertexConsumerProvider consumers;
 	protected Profiler profiler;
+	protected boolean advancedTranslucency;
 
 	public void prepare(
 		WorldRenderer worldRenderer,
@@ -45,9 +50,12 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 		long limitTime,
 		boolean blockOutlines,
 		Camera camera,
+		GameRenderer gameRenderer,
+		LightmapTextureManager lightmapTextureManager,
 		Matrix4f projectionMatrix,
 		VertexConsumerProvider consumers,
-		Profiler profiler
+		Profiler profiler,
+		boolean advancedTranslucency
 	) {
 		this.worldRenderer = worldRenderer;
 		this.matrixStack = matrixStack;
@@ -55,9 +63,12 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 		this.limitTime = limitTime;
 		this.blockOutlines = blockOutlines;
 		this.camera = camera;
+		this.gameRenderer = gameRenderer;
+		this.lightmapTextureManager = lightmapTextureManager;
 		this.projectionMatrix = projectionMatrix;
 		this.consumers = consumers;
 		this.profiler = profiler;
+		this.advancedTranslucency = advancedTranslucency;
 	}
 
 	public void setFrustum(Frustum frustum) {
@@ -110,7 +121,22 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 	}
 
 	@Override
+	public GameRenderer gameRenderer() {
+		return gameRenderer;
+	}
+
+	@Override
+	public LightmapTextureManager lightmapTextureManager() {
+		return lightmapTextureManager;
+	}
+
+	@Override
 	public Profiler profiler() {
 		return profiler;
+	}
+
+	@Override
+	public boolean advancedTranslucency() {
+		return advancedTranslucency;
 	}
 }

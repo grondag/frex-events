@@ -26,7 +26,7 @@ public interface WorldRenderPreEntityCallback {
 	/**
 	 * Called after the Solid, Cutout and Cutout Mipped terrain layers have been output to the framebuffer.
 	 *
-	 * <p>Typical usage is to render non-translucent terrain to the framebuffer.
+	 * <p>Use to render non-translucent terrain to the framebuffer.
 	 *
 	 * <p>Note that 3rd-party renderers may combine these passes or otherwise alter the
 	 * rendering pipeline for sake of performance or features. This can break direct writes to the

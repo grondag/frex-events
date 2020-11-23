@@ -17,13 +17,24 @@
 package grondag.frex.api.event;
 
 import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.profiler.Profiler;
 
+/**
+ * Except as noted below, the properties exposed here match the parameters passed to
+ * {@link WorldRenderer#render(MatrixStack, float, long, boolean, Camera, GameRenderer, LightmapTextureManager, Matrix4f)}.
+ */
 public interface WorldRenderStartContext {
+	/**
+	 * The world renderer instance doing the rendering and invoking the event.
+	 *
+	 * @return WorldRenderer instance invoking the event
+	 */
 	WorldRenderer worldRenderer();
 
 	MatrixStack matrixStack();
@@ -36,8 +47,17 @@ public interface WorldRenderStartContext {
 
 	Camera camera();
 
+	GameRenderer gameRenderer();
+
+	LightmapTextureManager lightmapTextureManager();
+
 	Matrix4f projectionMatrix();
 
+	/**
+	 * Convenient access to game performance profiler.
+	 *
+	 * @return the active profiler
+	 */
 	Profiler profiler();
 
 	/**
@@ -53,4 +73,17 @@ public interface WorldRenderStartContext {
 	 * cast to that type, and caller can use the extended features available in FREX materials.
 	 */
 	VertexConsumerProvider consumers();
+
+	/**
+	 * Test to know if "fabulous" graphics mode is enabled.
+	 *
+	 * <p>Use this for renders that need to render on top of all translucency to activate or deactivate different
+	 * event handlers to get optimal depth testing results. When fabulous is off, it may be better to render
+	 * during {@code WorldRenderLastCallback} after clouds and weather are drawn. Conversely, when fabulous mode is on,
+	 * it may be better to draw during {@code WorldRenderPostTranslucentCallback}, before the fabulous mode composite
+	 * shader runs, depending on which translucent buffer is being targeted.
+	 *
+	 * @return {@code true} when "fabulous" graphics mode is enabled.
+	 */
+	boolean advancedTranslucency();
 }

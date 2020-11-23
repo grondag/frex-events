@@ -28,7 +28,7 @@ public interface WorldRenderStartCallback {
 	 * Use this event instead of injecting to the HEAD of {@link WorldRenderer#render} to avoid
 	 * compatibility problems with 3rd-party renderer implementations.
 	 *
-	 * <p>Typical usage is for setup of state that is needed during the world render call that
+	 * <p>Use for setup of state that is needed during the world render call that
 	 * does not depend on the view frustum.
 	 */
 	void onWorldRenderStart(WorldRenderStartContext context);
