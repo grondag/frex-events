@@ -35,14 +35,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.Matrix4f;
 
-import grondag.frex.api.event.WorldRenderDebugRenderCallback;
-import grondag.frex.api.event.WorldRenderEndCallback;
-import grondag.frex.api.event.WorldRenderLastCallback;
-import grondag.frex.api.event.WorldRenderPostEntityCallback;
-import grondag.frex.api.event.WorldRenderPostSetupCallback;
-import grondag.frex.api.event.WorldRenderPostTranslucentCallback;
-import grondag.frex.api.event.WorldRenderPreEntityCallback;
-import grondag.frex.api.event.WorldRenderStartCallback;
+import grondag.frex.api.event.WorldRenderEvents;
 import grondag.frex.impl.event.WorldRenderContextImpl;
 
 @Internal
@@ -57,29 +50,29 @@ public class MixinWorldRenderer {
 	@Inject(method = "render", at = @At("HEAD"))
 	private void beforeRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
 		context.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler(), transparencyShader != null);
-		WorldRenderStartCallback.EVENT.invoker().onWorldRenderStart(context);
+		WorldRenderEvents.START.invoker().onStart(context);
 		didRenderParticles = false;
 	}
 
 	@Inject(method = "setupTerrain", at = @At("RETURN"))
 	private void afterTerrainSetup(Camera camera, Frustum frustum, boolean hasForcedFrustum, int frame, boolean spectator, CallbackInfo ci) {
 		context.setFrustum(frustum);
-		WorldRenderPostSetupCallback.EVENT.invoker().afterWorldRenderSetup(context);
+		WorldRenderEvents.AFTER_SETUP.invoker().afterSetup(context);
 	}
 
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDD)V", ordinal = 2, shift = Shift.AFTER))
 	private void afterTerrainSolid(CallbackInfo ci) {
-		WorldRenderPreEntityCallback.EVENT.invoker().beforeWorldRenderEntities(context);
+		WorldRenderEvents.BEFORE_ENTITIES.invoker().beforeEntities(context);
 	}
 
 	@Inject(method = "render", at = @At(value = "CONSTANT", args = "stringValue=blockentities", ordinal = 0))
 	private void afterEntities(CallbackInfo ci) {
-		WorldRenderPostEntityCallback.EVENT.invoker().afterWorldRenderEntities(context);
+		WorldRenderEvents.AFTER_ENTITIES.invoker().afterEntities(context);
 	}
 
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V", ordinal = 0))
 	private void beforeDebugRender(CallbackInfo ci) {
-		WorldRenderDebugRenderCallback.EVENT.invoker().onWorldRenderDebugRender(context);
+		WorldRenderEvents.BEFORE_DEBUG_RENDER.invoker().beforeDebugRender(context);
 	}
 
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V"))
@@ -92,18 +85,17 @@ public class MixinWorldRenderer {
 	private void beforeClouds(CallbackInfo ci) {
 		if (didRenderParticles) {
 			didRenderParticles = false;
-			WorldRenderPostTranslucentCallback.EVENT.invoker().worldRenderAfterTranslucent(context);
+			WorldRenderEvents.AFTER_TRANSLUCENT.invoker().afterTranslucent(context);
 		}
 	}
 
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V"))
 	private void onChunkDebugRender(CallbackInfo ci) {
-		WorldRenderLastCallback.EVENT.invoker().worldRenderLast(context);
+		WorldRenderEvents.LAST.invoker().onLast(context);
 	}
 
 	@Inject(method = "render", at = @At("RETURN"))
 	private void afternRender(CallbackInfo ci) {
-		WorldRenderEndCallback.EVENT.invoker().worldRenderEnd(context);
+		WorldRenderEvents.END.invoker().onEnd(context);
 	}
 }
-
