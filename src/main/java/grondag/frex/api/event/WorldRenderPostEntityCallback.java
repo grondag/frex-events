@@ -28,7 +28,7 @@ public interface WorldRenderPostEntityCallback {
 	 * have been drawn to the main frame buffer target, before
 	 * block entity rendering begins.
 	 *
-	 * <p>Can be used for global block entity render setup, or
+	 * <p>Use for global block entity render setup, or
 	 * to append block-related quads to the entity consumers using the
 	 * {@VertexConsumerProvider} from the provided context. This
 	 * will generally give better (if not perfect) results
