@@ -7,7 +7,7 @@ will not break.
 The library is tiny and includes hooks that work with the vanilla WorldRenderer class so that it can be 
 depended on directly and bundled with mods that use it.
 
-# Using FREX
+# Using FREX Events
 
 Add the maven repo where my libraries live to your build.gradle
 
@@ -20,7 +20,7 @@ repositories {
 }
 ```
 
-And add FREX Events to your dependencies
+And add to your dependencies
 
 ```gradle
 dependencies {
@@ -28,7 +28,5 @@ dependencies {
 	include "grondag:frex-events:1.0.+"
 }
 ```
-
-The ```include``` is not necessary if you are depending on another mod that also includes FREX.  Currently, [Canvas](https://github.com/grondag/canvas) and [JMX](https://github.com/grondag/json-model-extensions) both include FREX.
 
 Note that version is subject to change - look at the repo to find latest.
