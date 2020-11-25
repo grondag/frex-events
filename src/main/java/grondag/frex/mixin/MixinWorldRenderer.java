@@ -24,15 +24,20 @@ import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderEffect;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 
 import grondag.frex.api.event.WorldRenderEvents;
@@ -44,12 +49,13 @@ public class MixinWorldRenderer {
 	@Shadow private BufferBuilderStorage bufferBuilders;
 	@Shadow private ClientWorld world;
 	@Shadow private ShaderEffect transparencyShader;
+	@Shadow private MinecraftClient client;
 	private final WorldRenderContextImpl context = new WorldRenderContextImpl();
 	private boolean didRenderParticles;
 
 	@Inject(method = "render", at = @At("HEAD"))
 	private void beforeRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
-		context.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler(), transparencyShader != null);
+		context.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler(), transparencyShader != null, world);
 		WorldRenderEvents.START.invoker().onStart(context);
 		didRenderParticles = false;
 	}
@@ -60,7 +66,15 @@ public class MixinWorldRenderer {
 		WorldRenderEvents.AFTER_SETUP.invoker().afterSetup(context);
 	}
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDD)V", ordinal = 2, shift = Shift.AFTER))
+	@Inject(
+		method = "render",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDD)V",
+			ordinal = 2,
+			shift = Shift.AFTER
+		)
+	)
 	private void afterTerrainSolid(CallbackInfo ci) {
 		WorldRenderEvents.BEFORE_ENTITIES.invoker().beforeEntities(context);
 	}
@@ -70,12 +84,57 @@ public class MixinWorldRenderer {
 		WorldRenderEvents.AFTER_ENTITIES.invoker().afterEntities(context);
 	}
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V", ordinal = 0))
+	@Inject(
+		method = "render",
+		at = @At(
+			value = "FIELD",
+			target = "Lnet/minecraft/client/MinecraftClient;crosshairTarget:Lnet/minecraft/util/hit/HitResult;",
+			shift = At.Shift.AFTER,
+			ordinal = 1
+		)
+	)
+	private void beforeRenderOutline(CallbackInfo ci) {
+		context.setHitResult(client.crosshairTarget);
+		WorldRenderEvents.BEFORE_BLOCK_OUTLINE.invoker().beforeBlockOutline(context);
+	}
+
+	@Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
+	private void onDrawBlockOutline(MatrixStack matrixStack, VertexConsumer vertexConsumer, Entity entity, double cameraX, double cameraY, double cameraZ, BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
+		if (context.didCancelDefaultBlockOutline()) {
+			// Was cancelled before we got here, so does not count as
+			// cancelled in later events, per contract of the API.
+			context.resetDefaultBlockOutline();
+			ci.cancel();
+		} else {
+			context.prepareBlockOutline(vertexConsumer, entity, cameraX, cameraY, cameraZ, blockPos, blockState);
+			WorldRenderEvents.BLOCK_OUTLINE.invoker().onBlockOutline(context);
+
+			// If default outline render was cancelled we leave that indicator intact
+			if (context.didCancelDefaultBlockOutline()) {
+				ci.cancel();
+			}
+		}
+	}
+
+	@Inject(
+		method = "render",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V",
+			ordinal = 0
+		)
+	)
 	private void beforeDebugRender(CallbackInfo ci) {
 		WorldRenderEvents.BEFORE_DEBUG_RENDER.invoker().beforeDebugRender(context);
 	}
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V"))
+	@Inject(
+		method = "render",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V"
+		)
+	)
 	private void onRenderParticles(CallbackInfo ci) {
 		// set a flag so we know the next pushMatrix call is after particles
 		didRenderParticles = true;
@@ -89,7 +148,13 @@ public class MixinWorldRenderer {
 		}
 	}
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V"))
+	@Inject(
+		method = "render",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V"
+		)
+	)
 	private void onChunkDebugRender(CallbackInfo ci) {
 		WorldRenderEvents.LAST.invoker().onLast(context);
 	}

@@ -94,6 +94,54 @@ public final class WorldRenderEvents {
 	});
 
 	/**
+	 * Called before default block outline rendering and before checks are
+	 * done to determine if it should happen. Can optionally cancel the default
+	 * rendering but all event handlers will always be called.
+	 *
+	 * <p>Use this to decorate or replace the default block outline rendering
+	 * for specific modded blocks or when the need for a block outline render
+	 * would not be detected.  Normally, outline rendering will not happen for
+	 * entities or other game objects that do not register a block-type hit.
+	 *
+	 * <p>Canceling the default block outline render has no effect on other
+	 * event subscribers - all subscribers will always be called. Generally, modded
+	 * block outline renders are specific to that mod's content or additive
+	 * and thus should not interfere with each other.
+	 *
+	 * <p>This event should NOT be used for general-purpose replacement of
+	 * the default block outline rendering because it will interfere with mod-specific
+	 * renders.  Mods that replace the default block outline should instead
+	 * subscribe to {@link #BLOCK_OUTLINE}.
+	 */
+	public static final Event<BeforeBlockOutline> BEFORE_BLOCK_OUTLINE = EventFactory.createArrayBacked(BeforeBlockOutline.class, callbacks -> context -> {
+		for (final BeforeBlockOutline callback : callbacks) {
+			callback.beforeBlockOutline(context);
+		}
+	});
+
+	/**
+	 * Called after block outline render checks are made and before the
+	 * default block outline render runs.  Will NOT be called if the default outline
+	 * render was cancelled in {@link #BEFORE_BLOCK_OUTLINE}.
+	 *
+	 * <p>Use this to replace the default block outline rendering entirely.
+	 * Canceling the default outline render here avoids interfering
+	 * with mod-specific outline renders that cannot be well-handled by a
+	 * general-purpose outline renderer.
+	 *
+	 * <p>Default block outline rendering does not have to happen here.  If a custom
+	 * default outline effect benefits from being drawn at a later stage it can
+	 * be cancelled here and then drawn in {@link #AFTER_TRANSLUCENT} or {@link #LAST}
+	 * if desired. To facilitate this pattern, those events can check
+	 * {@link WorldRenderContext.AfterBlockOutline#didCancelDefaultBlockOutline()}.
+	 */
+	public static final Event<BlockOutline> BLOCK_OUTLINE = EventFactory.createArrayBacked(BlockOutline.class, callbacks -> context -> {
+		for (final BlockOutline callback : callbacks) {
+			callback.onBlockOutline(context);
+		}
+	});
+
+	/**
 	 * Called before vanilla debug renderers are output to the framebuffer.
 	 * This happens very soon after entities, block breaking and most other
 	 * non-translucent renders but before translucency is drawn.
@@ -120,6 +168,11 @@ public final class WorldRenderEvents {
 	 * (or the main target when fabulous isn't active) before clouds and weather
 	 * are drawn.  However, note that {@code WorldRenderPostEntityCallback} will
 	 * offer better results in most use cases.
+	 *
+	 * <p>Vertex consumers are not available in this event because all buffered quads
+	 * are drawn before this event is called.  Any rendering here must be drawn
+	 * directly to the frame buffer.  The render state matrix will not include
+	 * camera transformation, so {@link #LAST} may be preferable if that is wanted.
 	 */
 	public static final Event<AfterTranslucent> AFTER_TRANSLUCENT = EventFactory.createArrayBacked(AfterTranslucent.class, callbacks -> context -> {
 		for (final AfterTranslucent callback : callbacks) {
@@ -158,41 +211,51 @@ public final class WorldRenderEvents {
 
 	@FunctionalInterface
 	public interface Start {
-		void onStart(WorldRenderStartContext context);
+		void onStart(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
 	public interface AfterSetup {
-		void afterSetup(WorldRenderContext context);
+		void afterSetup(WorldRenderContext.FrustumContext context);
 	}
 
 	@FunctionalInterface
 	public interface BeforeEntities {
-		void beforeEntities(WorldRenderContext context);
+		void beforeEntities(WorldRenderContext.MainContext context);
 	}
 
 	@FunctionalInterface
 	public interface AfterEntities {
-		void afterEntities(WorldRenderContext context);
+		void afterEntities(WorldRenderContext.MainContext context);
+	}
+
+	@FunctionalInterface
+	public interface BeforeBlockOutline {
+		void beforeBlockOutline(WorldRenderContext.PreBlockOutlineContext context);
+	}
+
+	@FunctionalInterface
+	public interface BlockOutline {
+		void onBlockOutline(WorldRenderContext.BlockOutlineContext context);
 	}
 
 	@FunctionalInterface
 	public interface DebugRender {
-		void beforeDebugRender(WorldRenderContext context);
+		void beforeDebugRender(WorldRenderContext.PostBlockOutlineContext context);
 	}
 
 	@FunctionalInterface
 	public interface AfterTranslucent {
-		void afterTranslucent(WorldRenderContext context);
+		void afterTranslucent(WorldRenderContext.LateContext context);
 	}
 
 	@FunctionalInterface
 	public interface Last {
-		void onLast(WorldRenderContext context);
+		void onLast(WorldRenderContext.LateContext context);
 	}
 
 	@FunctionalInterface
 	public interface End {
-		void onEnd(WorldRenderContext context);
+		void onEnd(WorldRenderContext.LateContext context);
 	}
 }

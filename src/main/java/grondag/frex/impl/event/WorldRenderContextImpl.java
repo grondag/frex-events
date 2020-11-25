@@ -16,32 +16,51 @@
 
 package grondag.frex.impl.event;
 
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.block.BlockState;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.profiler.Profiler;
 
 import grondag.frex.api.event.WorldRenderContext;
 
-public class WorldRenderContextImpl implements WorldRenderContext {
-	protected WorldRenderer worldRenderer;
-	protected MatrixStack matrixStack;
-	protected float tickDelta;
-	protected long limitTime;
-	protected boolean blockOutlines;
-	protected Camera camera;
-	protected Frustum frustum;
-	protected GameRenderer gameRenderer;
-	protected LightmapTextureManager lightmapTextureManager;
-	protected Matrix4f projectionMatrix;
-	protected VertexConsumerProvider consumers;
-	protected Profiler profiler;
-	protected boolean advancedTranslucency;
+public final class WorldRenderContextImpl implements WorldRenderContext.BlockOutlineContext, WorldRenderContext.PostBlockOutlineContext, WorldRenderContext.LateContext {
+	private WorldRenderer worldRenderer;
+	private MatrixStack matrixStack;
+	private float tickDelta;
+	private long limitTime;
+	private boolean blockOutlines;
+	private Camera camera;
+	private Frustum frustum;
+	private GameRenderer gameRenderer;
+	private LightmapTextureManager lightmapTextureManager;
+	private Matrix4f projectionMatrix;
+	private VertexConsumerProvider consumers;
+	private Profiler profiler;
+	private boolean advancedTranslucency;
+	@Nullable private HitResult hitResult;
+	private boolean cancelDefaultBlockOutline;
+	private ClientWorld world;
+
+	private VertexConsumer vertexConsumer;
+	private Entity entity;
+	private double cameraX;
+	private double cameraY;
+	private double cameraZ;
+	private BlockPos blockPos;
+	private BlockState blockState;
 
 	public void prepare(
 		WorldRenderer worldRenderer,
@@ -55,7 +74,8 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 		Matrix4f projectionMatrix,
 		VertexConsumerProvider consumers,
 		Profiler profiler,
-		boolean advancedTranslucency
+		boolean advancedTranslucency,
+		ClientWorld world
 	) {
 		this.worldRenderer = worldRenderer;
 		this.matrixStack = matrixStack;
@@ -69,10 +89,34 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 		this.consumers = consumers;
 		this.profiler = profiler;
 		this.advancedTranslucency = advancedTranslucency;
+		this.world = world;
 	}
 
 	public void setFrustum(Frustum frustum) {
 		this.frustum = frustum;
+	}
+
+	public void setHitResult(@Nullable HitResult hitResult) {
+		this.hitResult = hitResult;
+		resetDefaultBlockOutline();
+	}
+
+	public void prepareBlockOutline(
+			VertexConsumer vertexConsumer,
+			Entity entity,
+			double cameraX,
+			double cameraY,
+			double cameraZ,
+			BlockPos blockPos,
+			BlockState blockState
+	) {
+		this.vertexConsumer = vertexConsumer;
+		this.entity = entity;
+		this.cameraX = cameraX;
+		this.cameraY = cameraY;
+		this.cameraZ = cameraZ;
+		this.blockPos = blockPos;
+		this.blockState = blockState;
 	}
 
 	@Override
@@ -111,6 +155,11 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 	}
 
 	@Override
+	public ClientWorld world() {
+		return world;
+	}
+
+	@Override
 	public Frustum frustum() {
 		return frustum;
 	}
@@ -138,5 +187,59 @@ public class WorldRenderContextImpl implements WorldRenderContext {
 	@Override
 	public boolean advancedTranslucency() {
 		return advancedTranslucency;
+	}
+
+	@Override
+	public @Nullable HitResult hitResult() {
+		return hitResult;
+	}
+
+	@Override
+	public void cancelDefaultBlockOutline() {
+		cancelDefaultBlockOutline = true;
+	}
+
+	public void resetDefaultBlockOutline() {
+		cancelDefaultBlockOutline = false;
+	}
+
+	@Override
+	public boolean didCancelDefaultBlockOutline() {
+		return cancelDefaultBlockOutline;
+	}
+
+	@Override
+	public VertexConsumer vertexConsumer() {
+		return vertexConsumer;
+	}
+
+	@Override
+	public Entity entity() {
+		return entity;
+	}
+
+	@Override
+	public double cameraX() {
+		return cameraX;
+	}
+
+	@Override
+	public double cameraY() {
+		return cameraY;
+	}
+
+	@Override
+	public double cameraZ() {
+		return cameraZ;
+	}
+
+	@Override
+	public BlockPos blockPos() {
+		return blockPos;
+	}
+
+	@Override
+	public BlockState blockState() {
+		return blockState;
 	}
 }
