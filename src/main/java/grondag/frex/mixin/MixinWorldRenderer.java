@@ -19,6 +19,7 @@ package grondag.frex.mixin;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,6 +41,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 
+import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
+
 import grondag.frex.api.event.WorldRenderEvents;
 import grondag.frex.impl.event.WorldRenderContextImpl;
 
@@ -50,8 +53,8 @@ public class MixinWorldRenderer {
 	@Shadow private ClientWorld world;
 	@Shadow private ShaderEffect transparencyShader;
 	@Shadow private MinecraftClient client;
-	private final WorldRenderContextImpl context = new WorldRenderContextImpl();
-	private boolean didRenderParticles;
+	@Unique private final WorldRenderContextImpl context = new WorldRenderContextImpl();
+	@Unique private boolean didRenderParticles;
 
 	@Inject(method = "render", at = @At("HEAD"))
 	private void beforeRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
@@ -67,13 +70,13 @@ public class MixinWorldRenderer {
 	}
 
 	@Inject(
-		method = "render",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDD)V",
-			ordinal = 2,
-			shift = Shift.AFTER
-		)
+			method = "render",
+			at = @At(
+				value = "INVOKE",
+				target = "Lnet/minecraft/client/render/WorldRenderer;renderLayer(Lnet/minecraft/client/render/RenderLayer;Lnet/minecraft/client/util/math/MatrixStack;DDD)V",
+				ordinal = 2,
+				shift = Shift.AFTER
+			)
 	)
 	private void afterTerrainSolid(CallbackInfo ci) {
 		WorldRenderEvents.BEFORE_ENTITIES.invoker().beforeEntities(context);
@@ -85,55 +88,51 @@ public class MixinWorldRenderer {
 	}
 
 	@Inject(
-		method = "render",
-		at = @At(
-			value = "FIELD",
-			target = "Lnet/minecraft/client/MinecraftClient;crosshairTarget:Lnet/minecraft/util/hit/HitResult;",
-			shift = At.Shift.AFTER,
-			ordinal = 1
-		)
+			method = "render",
+			at = @At(
+				value = "FIELD",
+				target = "Lnet/minecraft/client/MinecraftClient;crosshairTarget:Lnet/minecraft/util/hit/HitResult;",
+				shift = At.Shift.AFTER,
+				ordinal = 1
+			)
 	)
 	private void beforeRenderOutline(CallbackInfo ci) {
-		context.setHitResult(client.crosshairTarget);
-		WorldRenderEvents.BEFORE_BLOCK_OUTLINE.invoker().beforeBlockOutline(context);
+		context.renderBlockOutline = WorldRenderEvents.BEFORE_BLOCK_OUTLINE.invoker().beforeBlockOutline(context, client.crosshairTarget);
 	}
 
 	@Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
 	private void onDrawBlockOutline(MatrixStack matrixStack, VertexConsumer vertexConsumer, Entity entity, double cameraX, double cameraY, double cameraZ, BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
-		if (context.didCancelDefaultBlockOutline()) {
-			// Was cancelled before we got here, so does not count as
-			// cancelled in later events, per contract of the API.
-			context.resetDefaultBlockOutline();
+		if (!context.renderBlockOutline) {
+			// Was cancelled before we got here, so do not
+			// fire the BLOCK_OUTLINE event per contract of the API.
 			ci.cancel();
 		} else {
 			context.prepareBlockOutline(vertexConsumer, entity, cameraX, cameraY, cameraZ, blockPos, blockState);
-			WorldRenderEvents.BLOCK_OUTLINE.invoker().onBlockOutline(context);
 
-			// If default outline render was cancelled we leave that indicator intact
-			if (context.didCancelDefaultBlockOutline()) {
+			if (!WorldRenderEvents.BLOCK_OUTLINE.invoker().onBlockOutline(context, context)) {
 				ci.cancel();
 			}
 		}
 	}
 
 	@Inject(
-		method = "render",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V",
-			ordinal = 0
-		)
+			method = "render",
+			at = @At(
+				value = "INVOKE",
+				target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V",
+				ordinal = 0
+			)
 	)
 	private void beforeDebugRender(CallbackInfo ci) {
 		WorldRenderEvents.BEFORE_DEBUG_RENDER.invoker().beforeDebugRender(context);
 	}
 
 	@Inject(
-		method = "render",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V"
-		)
+			method = "render",
+			at = @At(
+				value = "INVOKE",
+				target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V"
+			)
 	)
 	private void onRenderParticles(CallbackInfo ci) {
 		// set a flag so we know the next pushMatrix call is after particles
@@ -149,18 +148,23 @@ public class MixinWorldRenderer {
 	}
 
 	@Inject(
-		method = "render",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V"
-		)
+			method = "render",
+			at = @At(
+				value = "INVOKE",
+				target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V"
+			)
 	)
 	private void onChunkDebugRender(CallbackInfo ci) {
 		WorldRenderEvents.LAST.invoker().onLast(context);
 	}
 
 	@Inject(method = "render", at = @At("RETURN"))
-	private void afternRender(CallbackInfo ci) {
+	private void afterRender(CallbackInfo ci) {
 		WorldRenderEvents.END.invoker().onEnd(context);
+	}
+
+	@Inject(method = "reload", at = @At("HEAD"))
+	private void onReload(CallbackInfo ci) {
+		InvalidateRenderStateCallback.EVENT.invoker().onInvalidate();
 	}
 }

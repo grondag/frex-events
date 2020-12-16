@@ -16,8 +16,6 @@
 
 package grondag.frex.impl.event;
 
-import org.jetbrains.annotations.Nullable;
-
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
@@ -29,14 +27,17 @@ import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.profiler.Profiler;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+
 import grondag.frex.api.event.WorldRenderContext;
 
-public final class WorldRenderContextImpl implements WorldRenderContext.BlockOutlineContext, WorldRenderContext.PostBlockOutlineContext, WorldRenderContext.LateContext {
+@Environment(EnvType.CLIENT)
+public final class WorldRenderContextImpl implements WorldRenderContext.BlockOutlineContext, WorldRenderContext {
 	private WorldRenderer worldRenderer;
 	private MatrixStack matrixStack;
 	private float tickDelta;
@@ -50,8 +51,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	private VertexConsumerProvider consumers;
 	private Profiler profiler;
 	private boolean advancedTranslucency;
-	@Nullable private HitResult hitResult;
-	private boolean cancelDefaultBlockOutline;
 	private ClientWorld world;
 
 	private VertexConsumer vertexConsumer;
@@ -62,20 +61,22 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	private BlockPos blockPos;
 	private BlockState blockState;
 
+	public boolean renderBlockOutline = true;
+
 	public void prepare(
-		WorldRenderer worldRenderer,
-		MatrixStack matrixStack,
-		float tickDelta,
-		long limitTime,
-		boolean blockOutlines,
-		Camera camera,
-		GameRenderer gameRenderer,
-		LightmapTextureManager lightmapTextureManager,
-		Matrix4f projectionMatrix,
-		VertexConsumerProvider consumers,
-		Profiler profiler,
-		boolean advancedTranslucency,
-		ClientWorld world
+			WorldRenderer worldRenderer,
+			MatrixStack matrixStack,
+			float tickDelta,
+			long limitTime,
+			boolean blockOutlines,
+			Camera camera,
+			GameRenderer gameRenderer,
+			LightmapTextureManager lightmapTextureManager,
+			Matrix4f projectionMatrix,
+			VertexConsumerProvider consumers,
+			Profiler profiler,
+			boolean advancedTranslucency,
+			ClientWorld world
 	) {
 		this.worldRenderer = worldRenderer;
 		this.matrixStack = matrixStack;
@@ -94,11 +95,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 
 	public void setFrustum(Frustum frustum) {
 		this.frustum = frustum;
-	}
-
-	public void setHitResult(@Nullable HitResult hitResult) {
-		this.hitResult = hitResult;
-		resetDefaultBlockOutline();
 	}
 
 	public void prepareBlockOutline(
@@ -187,25 +183,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	@Override
 	public boolean advancedTranslucency() {
 		return advancedTranslucency;
-	}
-
-	@Override
-	public @Nullable HitResult hitResult() {
-		return hitResult;
-	}
-
-	@Override
-	public void cancelDefaultBlockOutline() {
-		cancelDefaultBlockOutline = true;
-	}
-
-	public void resetDefaultBlockOutline() {
-		cancelDefaultBlockOutline = false;
-	}
-
-	@Override
-	public boolean didCancelDefaultBlockOutline() {
-		return cancelDefaultBlockOutline;
 	}
 
 	@Override
