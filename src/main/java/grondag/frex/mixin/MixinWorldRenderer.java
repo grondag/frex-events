@@ -53,20 +53,20 @@ public class MixinWorldRenderer {
 	@Shadow private ClientWorld world;
 	@Shadow private ShaderEffect transparencyShader;
 	@Shadow private MinecraftClient client;
-	@Unique private final WorldRenderContextImpl context = new WorldRenderContextImpl();
+	@Unique private final WorldRenderContextImpl frexContext = new WorldRenderContextImpl();
 	@Unique private boolean didRenderParticles;
 
 	@Inject(method = "render", at = @At("HEAD"))
 	private void beforeRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
-		context.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler(), transparencyShader != null, world);
-		WorldRenderEvents.START.invoker().onStart(context);
+		frexContext.prepare((WorldRenderer) (Object) this, matrices, tickDelta, limitTime, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, matrix4f, bufferBuilders.getEntityVertexConsumers(), world.getProfiler(), transparencyShader != null, world);
+		WorldRenderEvents.START.invoker().onStart(frexContext);
 		didRenderParticles = false;
 	}
 
 	@Inject(method = "setupTerrain", at = @At("RETURN"))
 	private void afterTerrainSetup(Camera camera, Frustum frustum, boolean hasForcedFrustum, int frame, boolean spectator, CallbackInfo ci) {
-		context.setFrustum(frustum);
-		WorldRenderEvents.AFTER_SETUP.invoker().afterSetup(context);
+		frexContext.setFrustum(frustum);
+		WorldRenderEvents.AFTER_SETUP.invoker().afterSetup(frexContext);
 	}
 
 	@Inject(
@@ -79,12 +79,12 @@ public class MixinWorldRenderer {
 			)
 	)
 	private void afterTerrainSolid(CallbackInfo ci) {
-		WorldRenderEvents.BEFORE_ENTITIES.invoker().beforeEntities(context);
+		WorldRenderEvents.BEFORE_ENTITIES.invoker().beforeEntities(frexContext);
 	}
 
 	@Inject(method = "render", at = @At(value = "CONSTANT", args = "stringValue=blockentities", ordinal = 0))
 	private void afterEntities(CallbackInfo ci) {
-		WorldRenderEvents.AFTER_ENTITIES.invoker().afterEntities(context);
+		WorldRenderEvents.AFTER_ENTITIES.invoker().afterEntities(frexContext);
 	}
 
 	@Inject(
@@ -97,19 +97,19 @@ public class MixinWorldRenderer {
 			)
 	)
 	private void beforeRenderOutline(CallbackInfo ci) {
-		context.renderBlockOutline = WorldRenderEvents.BEFORE_BLOCK_OUTLINE.invoker().beforeBlockOutline(context, client.crosshairTarget);
+		frexContext.renderBlockOutline = WorldRenderEvents.BEFORE_BLOCK_OUTLINE.invoker().beforeBlockOutline(frexContext, client.crosshairTarget);
 	}
 
 	@Inject(method = "drawBlockOutline", at = @At("HEAD"), cancellable = true)
 	private void onDrawBlockOutline(MatrixStack matrixStack, VertexConsumer vertexConsumer, Entity entity, double cameraX, double cameraY, double cameraZ, BlockPos blockPos, BlockState blockState, CallbackInfo ci) {
-		if (!context.renderBlockOutline) {
+		if (!frexContext.renderBlockOutline) {
 			// Was cancelled before we got here, so do not
 			// fire the BLOCK_OUTLINE event per contract of the API.
 			ci.cancel();
 		} else {
-			context.prepareBlockOutline(vertexConsumer, entity, cameraX, cameraY, cameraZ, blockPos, blockState);
+			frexContext.prepareBlockOutline(vertexConsumer, entity, cameraX, cameraY, cameraZ, blockPos, blockState);
 
-			if (!WorldRenderEvents.BLOCK_OUTLINE.invoker().onBlockOutline(context, context)) {
+			if (!WorldRenderEvents.BLOCK_OUTLINE.invoker().onBlockOutline(frexContext, frexContext)) {
 				ci.cancel();
 			}
 		}
@@ -124,7 +124,7 @@ public class MixinWorldRenderer {
 			)
 	)
 	private void beforeDebugRender(CallbackInfo ci) {
-		WorldRenderEvents.BEFORE_DEBUG_RENDER.invoker().beforeDebugRender(context);
+		WorldRenderEvents.BEFORE_DEBUG_RENDER.invoker().beforeDebugRender(frexContext);
 	}
 
 	@Inject(
@@ -143,7 +143,7 @@ public class MixinWorldRenderer {
 	private void beforeClouds(CallbackInfo ci) {
 		if (didRenderParticles) {
 			didRenderParticles = false;
-			WorldRenderEvents.AFTER_TRANSLUCENT.invoker().afterTranslucent(context);
+			WorldRenderEvents.AFTER_TRANSLUCENT.invoker().afterTranslucent(frexContext);
 		}
 	}
 
@@ -155,12 +155,12 @@ public class MixinWorldRenderer {
 			)
 	)
 	private void onChunkDebugRender(CallbackInfo ci) {
-		WorldRenderEvents.LAST.invoker().onLast(context);
+		WorldRenderEvents.LAST.invoker().onLast(frexContext);
 	}
 
 	@Inject(method = "render", at = @At("RETURN"))
 	private void afterRender(CallbackInfo ci) {
-		WorldRenderEvents.END.invoker().onEnd(context);
+		WorldRenderEvents.END.invoker().onEnd(frexContext);
 	}
 
 	@Inject(method = "reload", at = @At("HEAD"))
