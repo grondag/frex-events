@@ -41,6 +41,7 @@ import net.fabricmc.api.Environment;
  * {@link WorldRenderer#render(MatrixStack, float, long, boolean, Camera, GameRenderer, LightmapTextureManager, Matrix4f)}.
  */
 @Environment(EnvType.CLIENT)
+@Deprecated
 public interface WorldRenderContext {
 	/**
 	 * The world renderer instance doing the rendering and invoking the event.
@@ -119,6 +120,7 @@ public interface WorldRenderContext {
 	 * Used in {@code BLOCK_OUTLINE} to convey the parameters normally sent to
 	 * {@code WorldRenderer.drawBlockOutline}.
 	 */
+	@Deprecated
 	public interface BlockOutlineContext {
 		VertexConsumer vertexConsumer();
 

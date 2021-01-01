@@ -38,185 +38,123 @@ import grondag.frex.api.event.WorldRenderContext;
 
 @Environment(EnvType.CLIENT)
 public final class WorldRenderContextImpl implements WorldRenderContext.BlockOutlineContext, WorldRenderContext {
-	private WorldRenderer worldRenderer;
-	private MatrixStack matrixStack;
-	private float tickDelta;
-	private long limitTime;
-	private boolean blockOutlines;
-	private Camera camera;
-	private Frustum frustum;
-	private GameRenderer gameRenderer;
-	private LightmapTextureManager lightmapTextureManager;
-	private Matrix4f projectionMatrix;
-	private VertexConsumerProvider consumers;
-	private Profiler profiler;
-	private boolean advancedTranslucency;
-	private ClientWorld world;
+	private static net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext wrappedContext;
+	private static net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext.BlockOutlineContext wrappedBlockContext;
+	private static final WorldRenderContextImpl INSTANCE = new WorldRenderContextImpl();
 
-	private VertexConsumer vertexConsumer;
-	private Entity entity;
-	private double cameraX;
-	private double cameraY;
-	private double cameraZ;
-	private BlockPos blockPos;
-	private BlockState blockState;
-
-	public boolean renderBlockOutline = true;
-
-	public void prepare(
-			WorldRenderer worldRenderer,
-			MatrixStack matrixStack,
-			float tickDelta,
-			long limitTime,
-			boolean blockOutlines,
-			Camera camera,
-			GameRenderer gameRenderer,
-			LightmapTextureManager lightmapTextureManager,
-			Matrix4f projectionMatrix,
-			VertexConsumerProvider consumers,
-			Profiler profiler,
-			boolean advancedTranslucency,
-			ClientWorld world
-	) {
-		this.worldRenderer = worldRenderer;
-		this.matrixStack = matrixStack;
-		this.tickDelta = tickDelta;
-		this.limitTime = limitTime;
-		this.blockOutlines = blockOutlines;
-		this.camera = camera;
-		this.gameRenderer = gameRenderer;
-		this.lightmapTextureManager = lightmapTextureManager;
-		this.projectionMatrix = projectionMatrix;
-		this.consumers = consumers;
-		this.profiler = profiler;
-		this.advancedTranslucency = advancedTranslucency;
-		this.world = world;
+	public static WorldRenderContext wrap(net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext ctx) {
+		wrappedContext = ctx;
+		return INSTANCE;
 	}
 
-	public void setFrustum(Frustum frustum) {
-		this.frustum = frustum;
-	}
-
-	public void prepareBlockOutline(
-			VertexConsumer vertexConsumer,
-			Entity entity,
-			double cameraX,
-			double cameraY,
-			double cameraZ,
-			BlockPos blockPos,
-			BlockState blockState
-	) {
-		this.vertexConsumer = vertexConsumer;
-		this.entity = entity;
-		this.cameraX = cameraX;
-		this.cameraY = cameraY;
-		this.cameraZ = cameraZ;
-		this.blockPos = blockPos;
-		this.blockState = blockState;
+	public static WorldRenderContextImpl wrap(net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext ctx, net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext.BlockOutlineContext blockCtx) {
+		wrappedContext = ctx;
+		wrappedBlockContext = blockCtx;
+		return INSTANCE;
 	}
 
 	@Override
 	public WorldRenderer worldRenderer() {
-		return worldRenderer;
+		return wrappedContext.worldRenderer();
 	}
 
 	@Override
 	public MatrixStack matrixStack() {
-		return matrixStack;
+		return wrappedContext.matrixStack();
 	}
 
 	@Override
 	public float tickDelta() {
-		return tickDelta;
+		return wrappedContext.tickDelta();
 	}
 
 	@Override
 	public long limitTime() {
-		return limitTime;
+		return wrappedContext.limitTime();
 	}
 
 	@Override
 	public boolean blockOutlines() {
-		return blockOutlines;
+		return wrappedContext.blockOutlines();
 	}
 
 	@Override
 	public Camera camera() {
-		return camera;
+		return wrappedContext.camera();
 	}
 
 	@Override
 	public Matrix4f projectionMatrix() {
-		return projectionMatrix;
+		return wrappedContext.projectionMatrix();
 	}
 
 	@Override
 	public ClientWorld world() {
-		return world;
+		return wrappedContext.world();
 	}
 
 	@Override
 	public Frustum frustum() {
-		return frustum;
+		return wrappedContext.frustum();
 	}
 
 	@Override
 	public VertexConsumerProvider consumers() {
-		return consumers;
+		return wrappedContext.consumers();
 	}
 
 	@Override
 	public GameRenderer gameRenderer() {
-		return gameRenderer;
+		return wrappedContext.gameRenderer();
 	}
 
 	@Override
 	public LightmapTextureManager lightmapTextureManager() {
-		return lightmapTextureManager;
+		return wrappedContext.lightmapTextureManager();
 	}
 
 	@Override
 	public Profiler profiler() {
-		return profiler;
+		return wrappedContext.profiler();
 	}
 
 	@Override
 	public boolean advancedTranslucency() {
-		return advancedTranslucency;
+		return wrappedContext.advancedTranslucency();
 	}
 
 	@Override
 	public VertexConsumer vertexConsumer() {
-		return vertexConsumer;
+		return wrappedBlockContext.vertexConsumer();
 	}
 
 	@Override
 	public Entity entity() {
-		return entity;
+		return wrappedBlockContext.entity();
 	}
 
 	@Override
 	public double cameraX() {
-		return cameraX;
+		return wrappedBlockContext.cameraX();
 	}
 
 	@Override
 	public double cameraY() {
-		return cameraY;
+		return wrappedBlockContext.cameraY();
 	}
 
 	@Override
 	public double cameraZ() {
-		return cameraZ;
+		return wrappedBlockContext.cameraZ();
 	}
 
 	@Override
 	public BlockPos blockPos() {
-		return blockPos;
+		return wrappedBlockContext.blockPos();
 	}
 
 	@Override
 	public BlockState blockState() {
-		return blockState;
+		return wrappedBlockContext.blockState();
 	}
 }

@@ -35,8 +35,11 @@ import grondag.frex.api.event.WorldRenderContext.BlockOutlineContext;
  * that make large-scale changes to rendering maintain compatibility by calling any broken even invokers directly.
  *
  * <p>These events are not dependent on the Fabric rendering API or Indigo but work when those are present.
+ *
+ * @deprecated Now part of Fabric API.
  */
 @Environment(EnvType.CLIENT)
+@Deprecated
 public final class WorldRenderEvents {
 	private WorldRenderEvents() { }
 
@@ -48,6 +51,7 @@ public final class WorldRenderEvents {
 	 * <p>Use for setup of state that is needed during the world render call that
 	 * does not depend on the view frustum.
 	 */
+	@Deprecated
 	public static final Event<Start> START = EventFactory.createArrayBacked(Start.class, context -> { }, callbacks -> context -> {
 		for (final Start callback : callbacks) {
 			callback.onStart(context);
@@ -60,6 +64,7 @@ public final class WorldRenderEvents {
 	 *
 	 * <p>Use for setup of state that depends on view frustum.
 	 */
+	@Deprecated
 	public static final Event<AfterSetup> AFTER_SETUP = EventFactory.createArrayBacked(AfterSetup.class, context -> { }, callbacks -> context -> {
 		for (final AfterSetup callback : callbacks) {
 			callback.afterSetup(context);
@@ -86,6 +91,7 @@ public final class WorldRenderEvents {
 	 *
 	 * <p>This event fires before entities and block entities are rendered and may be useful to prepare them.
 	 */
+	@Deprecated
 	public static final Event<BeforeEntities> BEFORE_ENTITIES = EventFactory.createArrayBacked(BeforeEntities.class, context -> { }, callbacks -> context -> {
 		for (final BeforeEntities callback : callbacks) {
 			callback.beforeEntities(context);
@@ -103,6 +109,7 @@ public final class WorldRenderEvents {
 	 * will generally give better (if not perfect) results
 	 * for non-terrain translucency vs. drawing directly later on.
 	 */
+	@Deprecated
 	public static final Event<AfterEntities> AFTER_ENTITIES = EventFactory.createArrayBacked(AfterEntities.class, context -> { }, callbacks -> context -> {
 		for (final AfterEntities callback : callbacks) {
 			callback.afterEntities(context);
@@ -130,6 +137,7 @@ public final class WorldRenderEvents {
 	 * renders.  Mods that replace the default block outline for specific blocks
 	 * should instead subscribe to {@link #BLOCK_OUTLINE}.
 	 */
+	@Deprecated
 	public static final Event<BeforeBlockOutline> BEFORE_BLOCK_OUTLINE = EventFactory.createArrayBacked(BeforeBlockOutline.class, (context, hit) -> true, callbacks -> (context, hit) -> {
 		boolean shouldRender = true;
 
@@ -164,6 +172,7 @@ public final class WorldRenderEvents {
 	 * be accomplished by mixin to the block outline render routine itself, typically
 	 * by targeting {@link WorldRenderer#drawShapeOutline}.
 	 */
+	@Deprecated
 	public static final Event<BlockOutline> BLOCK_OUTLINE = EventFactory.createArrayBacked(BlockOutline.class, (worldRenderContext, blockOutlieContext) -> true, callbacks -> (worldRenderContext, blockOutlieContext) -> {
 		boolean shouldRender = true;
 
@@ -188,6 +197,7 @@ public final class WorldRenderEvents {
 	 * <p>Use to drawn lines, overlays and other content similar to vanilla
 	 * debug renders.
 	 */
+	@Deprecated
 	public static final Event<DebugRender> BEFORE_DEBUG_RENDER = EventFactory.createArrayBacked(DebugRender.class, context -> { }, callbacks -> context -> {
 		for (final DebugRender callback : callbacks) {
 			callback.beforeDebugRender(context);
@@ -209,6 +219,7 @@ public final class WorldRenderEvents {
 	 * directly to the frame buffer.  The render state matrix will not include
 	 * camera transformation, so {@link #LAST} may be preferable if that is wanted.
 	 */
+	@Deprecated
 	public static final Event<AfterTranslucent> AFTER_TRANSLUCENT = EventFactory.createArrayBacked(AfterTranslucent.class, context -> { }, callbacks -> context -> {
 		for (final AfterTranslucent callback : callbacks) {
 			callback.afterTranslucent(context);
@@ -225,6 +236,7 @@ public final class WorldRenderEvents {
 	 *
 	 * <p>Use to draw content that should appear on top of the world before hand and GUI rendering occur.
 	 */
+	@Deprecated
 	public static final Event<Last> LAST = EventFactory.createArrayBacked(Last.class, context -> { }, callbacks -> context -> {
 		for (final Last callback : callbacks) {
 			callback.onLast(context);
@@ -238,6 +250,7 @@ public final class WorldRenderEvents {
 	 * down transient state in event handlers or as a hook that precedes hand/held item
 	 * and GUI rendering.
 	 */
+	@Deprecated
 	public static final Event<End> END = EventFactory.createArrayBacked(End.class, context -> { }, callbacks -> context -> {
 		for (final End callback : callbacks) {
 			callback.onEnd(context);
@@ -245,26 +258,31 @@ public final class WorldRenderEvents {
 	});
 
 	@FunctionalInterface
+	@Deprecated
 	public interface Start {
 		void onStart(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface AfterSetup {
 		void afterSetup(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface BeforeEntities {
 		void beforeEntities(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface AfterEntities {
 		void afterEntities(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface BeforeBlockOutline {
 		/**
 		 * Event signature for {@link WorldRenderEvents#BEFORE_BLOCK_OUTLINE}.
@@ -280,26 +298,31 @@ public final class WorldRenderEvents {
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface BlockOutline {
 		boolean onBlockOutline(WorldRenderContext worldRenderContext, BlockOutlineContext blockOutlieContext);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface DebugRender {
 		void beforeDebugRender(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface AfterTranslucent {
 		void afterTranslucent(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface Last {
 		void onLast(WorldRenderContext context);
 	}
 
 	@FunctionalInterface
+	@Deprecated
 	public interface End {
 		void onEnd(WorldRenderContext context);
 	}
